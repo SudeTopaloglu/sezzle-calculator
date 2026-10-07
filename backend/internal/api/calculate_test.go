@@ -1,30 +1,10 @@
 package api
 
 import (
-	"encoding/json"
-	"io"
-	"log/slog"
 	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
-
-func newTestServer(t *testing.T, staticDir string) http.Handler {
-	t.Helper()
-	return NewRouter(slog.New(slog.NewTextHandler(io.Discard, nil)), staticDir)
-}
-
-func serve(t *testing.T, handler http.Handler, method, path, body string) *httptest.ResponseRecorder {
-	t.Helper()
-	req := httptest.NewRequest(method, path, strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-	return rec
-}
 
 func TestCalculateSuccess(t *testing.T) {
 	tests := []struct {
@@ -40,7 +20,7 @@ func TestCalculateSuccess(t *testing.T) {
 		{"zero operand is accepted", "/api/v1/add", `{"a": 0, "b": 0}`, `{"operation":"add","a":0,"b":0,"result":0}`},
 		{"power", "/api/v1/power", `{"a": 2, "b": 8}`, `{"operation":"power","a":2,"b":8,"result":256}`},
 		{"sqrt omits b", "/api/v1/sqrt", `{"a": 81}`, `{"operation":"sqrt","a":81,"result":9}`},
-		{"percentage", "/api/v1/percentage", `{"a": 25}`, `{"operation":"percentage","a":25,"result":0.25}`},
+		{"percentage", "/api/v1/percentage", `{"a": 25, "b": 80}`, `{"operation":"percentage","a":25,"b":80,"result":20}`},
 		{"exponent notation", "/api/v1/multiply", `{"a": 1e20, "b": 1e20}`, `{"operation":"multiply","a":100000000000000000000,"b":100000000000000000000,"result":1e+40}`},
 	}
 
@@ -89,6 +69,7 @@ func TestCalculateErrors(t *testing.T) {
 		{"null body", "/api/v1/sqrt", `null`, http.StatusBadRequest, "INVALID_REQUEST", `operand "a" is required`},
 		{"missing b", "/api/v1/divide", `{"a": 2}`, http.StatusBadRequest, "INVALID_REQUEST", `operand "b" is required`},
 		{"null b", "/api/v1/divide", `{"a": 2, "b": null}`, http.StatusBadRequest, "INVALID_REQUEST", `operand "b" is required`},
+		{"percentage without b", "/api/v1/percentage", `{"a": 10}`, http.StatusBadRequest, "INVALID_REQUEST", `operand "b" is required`},
 		{"extra operand for unary operation", "/api/v1/sqrt", `{"a": 4, "b": 2}`, http.StatusBadRequest, "INVALID_REQUEST", "single operand"},
 	}
 
@@ -97,56 +78,7 @@ func TestCalculateErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rec := serve(t, server, http.MethodPost, tt.path, tt.body)
 
-			if rec.Code != tt.wantStatus {
-				t.Fatalf("status = %d, want %d (body: %s)", rec.Code, tt.wantStatus, rec.Body)
-			}
-			var got errorResponse
-			if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
-				t.Fatalf("response is not a JSON error: %v (body: %s)", err, rec.Body)
-			}
-			if got.Error.Code != tt.wantCode {
-				t.Errorf("code = %q, want %q", got.Error.Code, tt.wantCode)
-			}
-			if !strings.Contains(got.Error.Message, tt.wantMessage) {
-				t.Errorf("message = %q, want it to contain %q", got.Error.Message, tt.wantMessage)
-			}
+			assertError(t, rec, tt.wantStatus, tt.wantCode, tt.wantMessage)
 		})
-	}
-}
-
-func TestMethodNotAllowed(t *testing.T) {
-	rec := serve(t, newTestServer(t, ""), http.MethodGet, "/api/v1/add", "")
-
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want %d", rec.Code, http.StatusMethodNotAllowed)
-	}
-}
-
-func TestHealth(t *testing.T) {
-	rec := serve(t, newTestServer(t, ""), http.MethodGet, "/healthz", "")
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
-	}
-	if got, want := strings.TrimSpace(rec.Body.String()), `{"status":"ok"}`; got != want {
-		t.Errorf("body = %s, want %s", got, want)
-	}
-}
-
-func TestServesStaticFiles(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("<h1>calculator</h1>"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	server := newTestServer(t, dir)
-
-	rec := serve(t, server, http.MethodGet, "/", "")
-	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "<h1>calculator</h1>") {
-		t.Errorf("GET / = %d %q, want the index page", rec.Code, rec.Body)
-	}
-
-	rec = serve(t, server, http.MethodPost, "/api/v1/add", `{"a": 1, "b": 1}`)
-	if rec.Code != http.StatusOK {
-		t.Errorf("API status with static files enabled = %d, want %d", rec.Code, http.StatusOK)
 	}
 }

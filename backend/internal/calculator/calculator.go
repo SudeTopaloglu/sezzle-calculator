@@ -34,7 +34,7 @@ var operations = map[string]Operation{
 	"divide":     binary(divide),
 	"power":      binary(func(a, b float64) (float64, error) { return math.Pow(a, b), nil }),
 	"sqrt":       unary(squareRoot),
-	"percentage": unary(func(a float64) (float64, error) { return a / 100, nil }),
+	"percentage": binary(percentOf),
 }
 
 // Lookup returns the operation registered under name.
@@ -97,6 +97,12 @@ func divide(a, b float64) (float64, error) {
 		return 0, ErrDivisionByZero
 	}
 	return a / b, nil
+}
+
+// percentOf returns a percent of b. Multiplying first keeps whole-number
+// cases exact: 10% of 50 is 5, not 5.000000000000001.
+func percentOf(a, b float64) (float64, error) {
+	return a * b / 100, nil
 }
 
 func squareRoot(a float64) (float64, error) {

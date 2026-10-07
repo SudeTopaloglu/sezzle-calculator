@@ -29,6 +29,20 @@ export function formatEntry(entry: string): string {
   return entry.startsWith('-') ? MINUS_SIGN + groupThousands(entry.slice(1)) : groupThousands(entry);
 }
 
+/**
+ * Formats a number for pasting elsewhere: rounded like the display, but
+ * without digit grouping or the typographic minus, e.g. "-1234.5".
+ */
+export function formatPlain(value: number): string {
+  return String(Number(value.toPrecision(MAX_SIGNIFICANT_DIGITS)));
+}
+
+/** Formats integer cents as US dollars, e.g. 123456 → "$1,234.56". Exact for any safe integer. */
+export function formatCurrency(cents: number): string {
+  const dollars = groupThousands(String(Math.trunc(cents / 100)));
+  return `$${dollars}.${String(cents % 100).padStart(2, '0')}`;
+}
+
 function formatScientific(magnitude: number): string {
   const [mantissa, exponent] = magnitude.toExponential(8).split('e');
   return `${Number(mantissa)}e${exponent.replace('+', '')}`;

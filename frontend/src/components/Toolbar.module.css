@@ -1,0 +1,117 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconButton,
+.splitButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  border: none;
+  background: var(--key-bg);
+  color: var(--text-function);
+  font: inherit;
+  cursor: pointer;
+  box-shadow:
+    0 5px 10px var(--shadow),
+    -3px -3px 8px var(--highlight);
+  transition:
+    box-shadow 120ms ease,
+    transform 120ms ease,
+    color 120ms ease;
+}
+
+.iconButton {
+  width: 42px;
+  border-radius: 50%;
+}
+
+.splitButton {
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text-operator);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.iconButton[data-status='copied'] {
+  color: var(--success);
+}
+
+.iconButton[data-status='failed'] {
+  color: var(--error);
+}
+
+@media (hover: hover) {
+  .iconButton:not(:disabled):hover,
+  .splitButton:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+}
+
+.iconButton:not(:disabled):active,
+.splitButton:not(:disabled):active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 2px 2px 6px var(--shadow),
+    inset -2px -2px 6px var(--highlight);
+}
+
+.iconButton:disabled,
+.splitButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.iconButton:focus-visible,
+.splitButton:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* A small "Copied" pill that pops up under the copy button. */
+.copy {
+  position: relative;
+  display: flex;
+}
+
+.feedback {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 1;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--surface);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -4px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.feedback[data-status='failed'] {
+  background: var(--error);
+}
+
+.feedback:not([data-status='idle']) {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

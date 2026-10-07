@@ -1,10 +1,11 @@
 import { formatEntry, formatNumber } from './format';
 import {
   describeCalculation,
-  isUnary,
+  describeOperand,
+  isImmediate,
   OPERATOR_SYMBOLS,
-  type BinaryOperation,
   type Calculation,
+  type Operator,
 } from './operations';
 
 /** float64 represents integers exactly up to about 15 digits. */
@@ -19,7 +20,7 @@ export interface CalculatorState {
   overwrite: boolean;
   /** Left operand of the pending operation. */
   accumulator: number | null;
-  pendingOperator: BinaryOperation | null;
+  pendingOperator: Operator | null;
   /** Secondary display line, e.g. "12 ×" or "12 × 3 =". */
   expression: string;
   error: string | null;
@@ -32,18 +33,20 @@ export type CalculatorAction =
   | { type: 'delete' }
   | { type: 'clear' }
   | { type: 'toggleSign' }
-  | { type: 'operator'; operator: BinaryOperation }
+  | { type: 'operator'; operator: Operator }
+  /** Puts a number on screen, e.g. a result picked from the history. */
+  | { type: 'recall'; value: number }
   | { type: 'calculationStarted' }
   | {
       type: 'calculationSucceeded';
       calculation: Calculation;
       result: number;
       /** Operator to continue with when the calculation was triggered by chaining, e.g. "2 + 3 ×". */
-      nextOperator: BinaryOperation | null;
+      nextOperator: Operator | null;
     }
   | { type: 'calculationFailed'; calculation: Calculation; message: string };
 
-type InputAction = Extract<CalculatorAction, { type: 'digit' | 'decimal' | 'delete' | 'toggleSign' | 'operator' }>;
+type InputAction = Extract<CalculatorAction, { type: 'digit' | 'decimal' | 'delete' | 'toggleSign' | 'operator' | 'recall' }>;
 type SuccessAction = Extract<CalculatorAction, { type: 'calculationSucceeded' }>;
 
 export const initialState: CalculatorState = {
@@ -129,17 +132,25 @@ function applyInput(state: CalculatorState, action: InputAction): CalculatorStat
         expression: `${formatNumber(accumulator)} ${OPERATOR_SYMBOLS[action.operator]}`,
       };
     }
+
+    case 'recall':
+      // With an operator pending, the recalled number becomes the second operand.
+      return {
+        ...state,
+        entry: String(action.value),
+        overwrite: true,
+        expression: state.pendingOperator === null ? '' : state.expression,
+      };
   }
 }
 
 function applyResult(state: CalculatorState, { calculation, result, nextOperator }: SuccessAction): CalculatorState {
-  if (isUnary(calculation.operation)) {
-    // A unary result becomes the current operand; a pending operation stays pending.
-    const description = describeCalculation(calculation);
+  if (isImmediate(calculation.operation)) {
+    // An immediate result becomes the current operand; a pending operation stays pending.
     const expression =
       state.pendingOperator !== null && state.accumulator !== null
-        ? `${formatNumber(state.accumulator)} ${OPERATOR_SYMBOLS[state.pendingOperator]} ${description}`
-        : `${description} =`;
+        ? `${formatNumber(state.accumulator)} ${OPERATOR_SYMBOLS[state.pendingOperator]} ${describeOperand(calculation)}`
+        : `${describeCalculation(calculation)} =`;
     return { ...state, entry: String(result), overwrite: true, expression, isCalculating: false };
   }
   if (nextOperator !== null) {
@@ -166,6 +177,15 @@ function countDigits(entry: string): number {
 /** The number on screen, which is also the operand the next operation will use. */
 export function currentValue(state: CalculatorState): number {
   return state.entry === null ? (state.accumulator ?? 0) : Number(state.entry);
+}
+
+/**
+ * What "%" takes a percentage of. After + or − it is the first operand, so
+ * "50 + 10%" adds 10% of 50; everywhere else it is 1, so "50%" is 0.5.
+ */
+export function percentageBase(state: CalculatorState): number {
+  const addsOrSubtracts = state.pendingOperator === 'add' || state.pendingOperator === 'subtract';
+  return addsOrSubtracts && state.accumulator !== null ? state.accumulator : 1;
 }
 
 /** The main display text. */

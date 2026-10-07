@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { calculate, CalculatorApiError } from './calculatorApi';
+import { calculate, CalculatorApiError, splitIntoInstallments, toUserMessage } from './calculatorApi';
 
 const fetchMock = vi.fn<typeof fetch>();
 
@@ -61,5 +61,60 @@ describe('calculate', () => {
     fetchMock.mockResolvedValue(jsonResponse(200, { result: 'NaN' }));
 
     await expect(calculate({ operation: 'add', a: 1, b: 2 })).rejects.toMatchObject({ code: 'UNEXPECTED_RESPONSE' });
+  });
+});
+
+describe('splitIntoInstallments', () => {
+  const plan = {
+    amountCents: 10001,
+    count: 4,
+    intervalDays: 14,
+    payments: [
+      { number: 1, dueInDays: 0, amountCents: 2501 },
+      { number: 2, dueInDays: 14, amountCents: 2500 },
+      { number: 3, dueInDays: 28, amountCents: 2500 },
+      { number: 4, dueInDays: 42, amountCents: 2500 },
+    ],
+  };
+
+  it('posts the amount in cents and returns the plan', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, plan));
+
+    await expect(splitIntoInstallments(10001)).resolves.toEqual(plan);
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/installments');
+    expect(JSON.parse(String(init?.body))).toEqual({ amountCents: 10001, count: 4 });
+  });
+
+  it('turns API errors into CalculatorApiError', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(422, { error: { code: 'AMOUNT_TOO_SMALL', message: 'too small' } }));
+
+    await expect(splitIntoInstallments(3)).rejects.toMatchObject({ code: 'AMOUNT_TOO_SMALL', isRetryable: false });
+  });
+
+  it.each([
+    ['no payments', { ...plan, payments: [] }],
+    ['fractional cents', { ...plan, payments: [{ number: 1, dueInDays: 0, amountCents: 25.5 }] }],
+    ['missing fields', { payments: plan.payments }],
+  ])('rejects a plan with %s', async (_, body) => {
+    fetchMock.mockResolvedValue(jsonResponse(200, body));
+
+    await expect(splitIntoInstallments(10001)).rejects.toMatchObject({ code: 'UNEXPECTED_RESPONSE', isRetryable: true });
+  });
+});
+
+describe('toUserMessage', () => {
+  it.each([
+    ['DIVISION_BY_ZERO', 'Cannot divide by zero'],
+    ['AMOUNT_TOO_SMALL', 'This amount is too small to split'],
+    ['NETWORK_ERROR', 'Service unavailable'],
+    ['SOMETHING_NEW', 'Something went wrong'],
+  ])('describes %s as "%s"', (code, message) => {
+    expect(toUserMessage(new CalculatorApiError(code, 'details'))).toBe(message);
+  });
+
+  it('has a fallback for unknown errors', () => {
+    expect(toUserMessage(new Error('boom'))).toBe('Something went wrong');
   });
 });

@@ -1,48 +1,14 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Calculator } from './Calculator';
+import { requestBody, stubBackend } from '../test/fakeBackend';
+import { displayExpression as expression, displayValue, renderCalculator as setup } from '../test/renderCalculator';
 
-/** Answers API requests the way the Go service does. */
-async function fakeBackend(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  const operation = String(input).split('/').pop() ?? '';
-  const { a, b } = JSON.parse(String(init?.body)) as { a: number; b: number };
-  if (operation === 'divide' && b === 0) {
-    return Response.json({ error: { code: 'DIVISION_BY_ZERO', message: 'division by zero is undefined' } }, { status: 422 });
-  }
-  const results: Record<string, number> = {
-    add: a + b,
-    subtract: a - b,
-    multiply: a * b,
-    divide: a / b,
-    power: a ** b,
-    sqrt: Math.sqrt(a),
-    percentage: a / 100,
-  };
-  return Response.json({ operation, a, b, result: results[operation] });
-}
-
-const fetchMock = vi.fn(fakeBackend);
+let fetchMock: ReturnType<typeof stubBackend>;
 
 beforeEach(() => {
-  fetchMock.mockReset();
-  fetchMock.mockImplementation(fakeBackend);
-  vi.stubGlobal('fetch', fetchMock);
+  fetchMock = stubBackend();
 });
 
-function setup() {
-  const user = userEvent.setup();
-  render(<Calculator />);
-  const click = async (...names: string[]) => {
-    for (const name of names) {
-      await user.click(screen.getByRole('button', { name }));
-    }
-  };
-  return { user, click };
-}
-
-const displayValue = () => screen.getByTestId('display-value');
-const expression = () => screen.getByTestId('display-expression');
 
 describe('Calculator', () => {
   it('starts at zero', () => {
@@ -59,9 +25,8 @@ describe('Calculator', () => {
     await waitFor(() => expect(displayValue()).toHaveTextContent(/^19$/));
     expect(expression()).toHaveTextContent('12 + 7 =');
     expect(fetchMock).toHaveBeenCalledOnce();
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('/api/v1/add');
-    expect(JSON.parse(String(init?.body))).toEqual({ a: 12, b: 7 });
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/add');
+    expect(requestBody(fetchMock)).toEqual({ a: 12, b: 7 });
   });
 
   it('evaluates chained operations from left to right', async () => {
@@ -93,7 +58,6 @@ describe('Calculator', () => {
 
   it.each([
     { keys: ['9', 'Square root'], result: '3', shown: '√(9) =' },
-    { keys: ['5', '0', 'Percent'], result: '0.5', shown: '50% =' },
     { keys: ['2', 'Power', '1', '0', 'Equals'], result: '1,024', shown: '2 ^ 10 =' },
     { keys: ['7', 'Toggle sign', 'Subtract', '3', 'Equals'], result: '−10', shown: '−7 − 3 =' },
     { keys: ['1', 'Decimal point', '5', 'Divide', '4', 'Equals'], result: '0.375', shown: '1.5 ÷ 4 =' },
@@ -104,6 +68,62 @@ describe('Calculator', () => {
 
     await waitFor(() => expect(displayValue()).toHaveTextContent(result));
     expect(expression()).toHaveTextContent(shown);
+  });
+
+  describe('percent', () => {
+    it.each([
+      { keys: ['5', '0', 'Percent'], result: '0.5', shown: '50% =' },
+      { keys: ['5', '0', 'Add', '1', '0', 'Percent', 'Equals'], result: '55', shown: '50 + 5 =' },
+      { keys: ['2', '0', '0', 'Subtract', '2', '5', 'Percent', 'Equals'], result: '150', shown: '200 − 50 =' },
+      { keys: ['5', '0', 'Multiply', '1', '0', 'Percent', 'Equals'], result: '5', shown: '50 × 0.1 =' },
+      { keys: ['2', '0', '0', 'Divide', '5', '0', 'Percent', 'Equals'], result: '400', shown: '200 ÷ 0.5 =' },
+    ])('calculates $shown', async ({ keys, result, shown }) => {
+      const { click } = setup();
+
+      await click(...keys);
+
+      await waitFor(() => expect(expression()).toHaveTextContent(shown));
+      expect(displayValue()).toHaveTextContent(new RegExp(`^${result}$`));
+    });
+
+    it('shows the percentage while the addition is pending', async () => {
+      const { click } = setup();
+
+      await click('5', '0', 'Add', '1', '0', 'Percent');
+
+      await waitFor(() => expect(expression()).toHaveTextContent('50 + 10%'));
+      expect(displayValue()).toHaveTextContent(/^5$/);
+      expect(requestBody(fetchMock)).toEqual({ a: 10, b: 50 });
+    });
+  });
+
+  it('copies the result without formatting and keeps the keyboard working', async () => {
+    const { user, click } = setup();
+
+    await click('1', '2', '3', '4', 'Decimal point', '5', 'Toggle sign', 'Copy result');
+
+    expect(await navigator.clipboard.readText()).toBe('-1234.5');
+    expect(screen.getByText('Copied')).toBeVisible();
+    await user.keyboard('9');
+    expect(displayValue()).toHaveTextContent('−1,234.59');
+  });
+
+  it('reports when the clipboard is unavailable', async () => {
+    const { click } = setup();
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+
+    await click('5', 'Copy result');
+
+    expect(await screen.findByText('Copy failed')).toBeVisible();
+  });
+
+  it('disables copy and split while an error is shown', async () => {
+    const { click } = setup();
+
+    await click('8', 'Divide', '0', 'Equals');
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Copy result' })).toBeDisabled());
+    expect(screen.getByRole('button', { name: 'Split in 4' })).toBeDisabled();
   });
 
   it('shows an error for division by zero and recovers on the next key', async () => {
@@ -152,7 +172,7 @@ describe('Calculator', () => {
 
   it('ignores keys while a calculation is in flight', async () => {
     let respond: (response: Response) => void = () => {};
-    fetchMock.mockImplementationOnce(() => new Promise((resolve) => (respond = resolve)));
+    fetchMock.mockImplementationOnce(() => new Promise<Response>((resolve) => (respond = resolve)));
     const { click } = setup();
 
     await click('6', 'Multiply', '7', 'Equals', 'Equals', '9');

@@ -1,0 +1,269 @@
+openapi: 3.1.0
+info:
+  title: Calculator API
+  version: 1.0.0
+  description: |
+    Arithmetic and installment-plan endpoints for the calculator frontend.
+
+    Every error response has the same shape, `{"error": {"code": "...", "message": "..."}}`.
+    Clients should branch on `code`; `message` is meant for people.
+
+servers:
+  - url: http://localhost:8080
+
+# The API is public: no authentication.
+security: []
+
+paths:
+  /api/v1/add:
+    post:
+      summary: Add two numbers (a + b)
+      operationId: add
+      tags: [Arithmetic]
+      requestBody: { $ref: '#/components/requestBodies/BinaryOperands' }
+      responses:
+        '200': { $ref: '#/components/responses/Result' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '422': { $ref: '#/components/responses/NoResult' }
+
+  /api/v1/subtract:
+    post:
+      summary: Subtract b from a (a − b)
+      operationId: subtract
+      tags: [Arithmetic]
+      requestBody: { $ref: '#/components/requestBodies/BinaryOperands' }
+      responses:
+        '200': { $ref: '#/components/responses/Result' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '422': { $ref: '#/components/responses/NoResult' }
+
+  /api/v1/multiply:
+    post:
+      summary: Multiply two numbers (a × b)
+      operationId: multiply
+      tags: [Arithmetic]
+      requestBody: { $ref: '#/components/requestBodies/BinaryOperands' }
+      responses:
+        '200': { $ref: '#/components/responses/Result' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '422': { $ref: '#/components/responses/NoResult' }
+
+  /api/v1/divide:
+    post:
+      summary: Divide a by b (a ÷ b)
+      description: Fails with `DIVISION_BY_ZERO` when `b` is 0.
+      operationId: divide
+      tags: [Arithmetic]
+      requestBody: { $ref: '#/components/requestBodies/BinaryOperands' }
+      responses:
+        '200': { $ref: '#/components/responses/Result' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '422': { $ref: '#/components/responses/NoResult' }
+
+  /api/v1/power:
+    post:
+      summary: Raise a to the power b (a^b)
+      description: Fails with `UNDEFINED_RESULT` for non-real results such as (−8)^0.5.
+      operationId: power
+      tags: [Arithmetic]
+      requestBody: { $ref: '#/components/requestBodies/BinaryOperands' }
+      responses:
+        '200': { $ref: '#/components/responses/Result' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '422': { $ref: '#/components/responses/NoResult' }
+
+  /api/v1/percentage:
+    post:
+      summary: Calculate a percent of b (a × b ÷ 100)
+      description: 'Pass `b: 1` for a plain percentage: 50% of 1 is 0.5.'
+      operationId: percentage
+      tags: [Arithmetic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BinaryOperands' }
+            example: { a: 10, b: 50 }
+      responses:
+        '200': { $ref: '#/components/responses/Result' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '422': { $ref: '#/components/responses/NoResult' }
+
+  /api/v1/sqrt:
+    post:
+      summary: Square root of a (√a)
+      description: Takes only `a`. Fails with `NEGATIVE_SQUARE_ROOT` when `a` is negative.
+      operationId: sqrt
+      tags: [Arithmetic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UnaryOperand' }
+            example: { a: 81 }
+      responses:
+        '200': { $ref: '#/components/responses/Result' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '422': { $ref: '#/components/responses/NoResult' }
+
+  /api/v1/installments:
+    post:
+      summary: Split an amount into equal payments every two weeks
+      description: |
+        Amounts are integer cents, so the payments always add up to the exact total.
+        Payments differ by at most one cent; leftover cents go to the earliest payments.
+      operationId: installments
+      tags: [Installments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InstallmentsRequest' }
+            example: { amountCents: 10001 }
+      responses:
+        '200':
+          description: The payment plan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InstallmentPlan' }
+              example:
+                amountCents: 10001
+                count: 4
+                intervalDays: 14
+                payments:
+                  - { number: 1, dueInDays: 0, amountCents: 2501 }
+                  - { number: 2, dueInDays: 14, amountCents: 2500 }
+                  - { number: 3, dueInDays: 28, amountCents: 2500 }
+                  - { number: 4, dueInDays: 42, amountCents: 2500 }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '422':
+          description: The amount cannot be split (`AMOUNT_TOO_SMALL`, `AMOUNT_TOO_LARGE`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: { code: AMOUNT_TOO_SMALL, message: 'amount is too small to split: every payment must be at least one cent' } }
+
+  /healthz:
+    get:
+      summary: Liveness check
+      operationId: health
+      tags: [Operations]
+      responses:
+        '200':
+          description: The service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, const: ok }
+
+components:
+  schemas:
+    BinaryOperands:
+      type: object
+      required: [a, b]
+      additionalProperties: false
+      properties:
+        a: { type: number }
+        b: { type: number }
+
+    UnaryOperand:
+      type: object
+      required: [a]
+      additionalProperties: false
+      properties:
+        a: { type: number }
+
+    CalculationResult:
+      type: object
+      required: [operation, a, result]
+      properties:
+        operation: { type: string, example: add }
+        a: { type: number, example: 2 }
+        b: { type: number, description: Omitted for unary operations, example: 3 }
+        result: { type: number, description: Always a finite number, example: 5 }
+
+    InstallmentsRequest:
+      type: object
+      required: [amountCents]
+      additionalProperties: false
+      properties:
+        amountCents:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+          description: Total in cents. Must be at least `count`, so each payment is at least one cent.
+        count:
+          type: integer
+          minimum: 2
+          maximum: 12
+          default: 4
+
+    InstallmentPlan:
+      type: object
+      required: [amountCents, count, intervalDays, payments]
+      properties:
+        amountCents: { type: integer }
+        count: { type: integer }
+        intervalDays: { type: integer, const: 14 }
+        payments:
+          type: array
+          items:
+            type: object
+            required: [number, dueInDays, amountCents]
+            properties:
+              number: { type: integer, description: 'Position in the plan, starting at 1' }
+              dueInDays: { type: integer, description: Days from today; the first payment is due today }
+              amountCents: { type: integer }
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - INVALID_REQUEST
+                - UNKNOWN_OPERATION
+                - DIVISION_BY_ZERO
+                - NEGATIVE_SQUARE_ROOT
+                - UNDEFINED_RESULT
+                - RESULT_OUT_OF_RANGE
+                - AMOUNT_TOO_SMALL
+                - AMOUNT_TOO_LARGE
+            message: { type: string }
+
+  requestBodies:
+    BinaryOperands:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/BinaryOperands' }
+          example: { a: 2, b: 3 }
+
+  responses:
+    Result:
+      description: The calculation result
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/CalculationResult' }
+
+    InvalidRequest:
+      description: Malformed body, missing or extra operand, or a non-numeric value (`INVALID_REQUEST`)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: { code: INVALID_REQUEST, message: 'operand "b" is required' } }
+
+    NoResult:
+      description: Valid request without a real, finite result (`DIVISION_BY_ZERO`, `NEGATIVE_SQUARE_ROOT`, `UNDEFINED_RESULT`, `RESULT_OUT_OF_RANGE`)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: { code: DIVISION_BY_ZERO, message: division by zero is undefined } }

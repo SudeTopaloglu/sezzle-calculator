@@ -1,0 +1,175 @@
+.total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 92px;
+  margin-bottom: 18px;
+  padding: 16px 22px;
+  border-radius: 24px;
+  background: var(--display-bg);
+}
+
+.totalLabel {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.totalAmount {
+  overflow-wrap: anywhere;
+  color: var(--text-display);
+  font-size: 2rem;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+}
+
+.rounded {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.schedule {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A timeline: each ring is linked to the next by a short line. */
+.payment {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 60px;
+  padding: 6px 4px;
+}
+
+.payment + .payment::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 21px;
+  width: 2px;
+  height: 18px;
+  border-radius: 1px;
+  background: var(--tape-divider);
+}
+
+.ring {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  transform: rotate(-90deg);
+}
+
+.ringTrack,
+.ringFill {
+  fill: none;
+  stroke-width: 4;
+}
+
+.ringTrack {
+  stroke: var(--tape-bg);
+}
+
+.ringFill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+
+.when {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.relative {
+  font-weight: 600;
+}
+
+.date {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.amount {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: var(--tape-bg);
+}
+
+.noticeIcon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--text-operator);
+}
+
+.noticeText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.retry {
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.retry:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.skeleton,
+.skeletonRow::after {
+  background: linear-gradient(90deg, var(--tape-bg) 30%, var(--tape-hover) 50%, var(--tape-bg) 70%);
+  background-size: 300% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.skeletonRow::after {
+  content: '';
+  flex: 1;
+  height: 40px;
+  border-radius: 14px;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .skeletonRow::after {
+    animation: none;
+  }
+}

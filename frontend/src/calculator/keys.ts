@@ -1,10 +1,10 @@
-import type { BinaryOperation, UnaryOperation } from './operations';
+import type { ImmediateOperation, Operator } from './operations';
 import type { CalculatorAction, Digit } from './reducer';
 
 /** What a key does, whether it is clicked on screen or typed on a keyboard. */
 export type KeyInput =
   | Extract<CalculatorAction, { type: 'digit' | 'decimal' | 'delete' | 'clear' | 'toggleSign' | 'operator' }>
-  | { type: 'unary'; operation: UnaryOperation }
+  | { type: 'immediate'; operation: ImmediateOperation }
   | { type: 'equals' };
 
 export type KeyVariant = 'digit' | 'function' | 'operator' | 'equals';
@@ -32,7 +32,7 @@ const digit = (value: Digit, span?: KeyDefinition['span']): KeyDefinition => ({
 });
 
 const operator = (
-  operation: BinaryOperation,
+  operation: Operator,
   label: string,
   ariaLabel: string,
   shortcuts: string[],
@@ -50,10 +50,10 @@ const operator = (
 export const KEYS: readonly KeyDefinition[] = [
   { id: 'clear', label: 'AC', ariaLabel: 'All clear', input: { type: 'clear' }, variant: 'function', shortcuts: ['Escape', 'Delete'] },
   { id: 'delete', label: 'DEL', ariaLabel: 'Delete', input: { type: 'delete' }, variant: 'function', shortcuts: ['Backspace'] },
-  { id: 'percentage', label: '%', ariaLabel: 'Percent', input: { type: 'unary', operation: 'percentage' }, variant: 'function', shortcuts: ['%'] },
+  { id: 'percentage', label: '%', ariaLabel: 'Percent', input: { type: 'immediate', operation: 'percentage' }, variant: 'function', shortcuts: ['%'] },
   operator('divide', '÷', 'Divide', ['/']),
 
-  { id: 'sqrt', label: '√', ariaLabel: 'Square root', input: { type: 'unary', operation: 'sqrt' }, variant: 'function', shortcuts: ['r'] },
+  { id: 'sqrt', label: '√', ariaLabel: 'Square root', input: { type: 'immediate', operation: 'sqrt' }, variant: 'function', shortcuts: ['r'] },
   operator('power', 'xʸ', 'Power', ['^'], 'function'),
   { id: 'toggle-sign', label: '±', ariaLabel: 'Toggle sign', input: { type: 'toggleSign' }, variant: 'function', shortcuts: ['n'] },
   operator('multiply', '×', 'Multiply', ['*', 'x']),

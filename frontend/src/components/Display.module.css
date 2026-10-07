@@ -59,3 +59,14 @@
 .display[aria-busy='true'] .value {
   opacity: 0.45;
 }
+
+@media (max-height: 760px) {
+  .display {
+    min-height: 88px;
+    padding: 12px 22px 10px;
+  }
+
+  .value[data-size='large'] {
+    font-size: 2.75rem;
+  }
+}

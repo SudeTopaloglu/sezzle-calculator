@@ -12,11 +12,16 @@ import (
 func NewRouter(logger *slog.Logger, staticDir string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", handleHealth)
+	mux.HandleFunc("POST /api/v1/installments", handleInstallments)
 	mux.HandleFunc("POST /api/v1/{operation}", handleCalculate)
 	if staticDir != "" {
 		mux.Handle("GET /", http.FileServer(http.Dir(staticDir)))
 	}
 	return logRequests(logger, mux)
+}
+
+func handleHealth(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 // statusRecorder captures the status code written by a handler.

@@ -5,6 +5,7 @@ import {
   displayValue,
   initialState,
   MAX_INPUT_DIGITS,
+  percentageBase,
   type CalculatorAction,
   type CalculatorState,
   type Digit,
@@ -157,10 +158,19 @@ describe('calculation results', () => {
 
   it('shows a standalone unary result as an equation', () => {
     const state = reduce([
-      { type: 'calculationSucceeded', calculation: { operation: 'percentage', a: 50 }, result: 0.5, nextOperator: null },
+      { type: 'calculationSucceeded', calculation: { operation: 'percentage', a: 50, b: 1 }, result: 0.5, nextOperator: null },
     ]);
     expect(state.expression).toBe('50% =');
     expect(displayValue(state)).toBe('0.5');
+  });
+
+  it('shows a percentage inside a pending addition as "50 + 10%"', () => {
+    const pending = reduce([...typeDigits('50'), { type: 'operator', operator: 'add' }, ...typeDigits('10')]);
+    const state = reduce(
+      [{ type: 'calculationSucceeded', calculation: { operation: 'percentage', a: 10, b: 50 }, result: 5, nextOperator: null }],
+      pending,
+    );
+    expect(state).toMatchObject({ entry: '5', expression: '50 + 10%', pendingOperator: 'add', accumulator: 50 });
   });
 
   it('formats results for display', () => {
@@ -186,5 +196,42 @@ describe('errors', () => {
 
   it('clears back to the initial state', () => {
     expect(reduce([{ type: 'clear' }], failed)).toEqual(initialState);
+  });
+});
+
+describe('percentageBase', () => {
+  const pendingWith = (operator: 'add' | 'subtract' | 'multiply' | 'divide' | 'power') =>
+    reduce([...typeDigits('50'), { type: 'operator', operator }, ...typeDigits('10')]);
+
+  it('takes the percentage of the first operand when adding or subtracting', () => {
+    expect(percentageBase(pendingWith('add'))).toBe(50);
+    expect(percentageBase(pendingWith('subtract'))).toBe(50);
+  });
+
+  it('uses 1 for other operators and standalone percentages', () => {
+    expect(percentageBase(pendingWith('multiply'))).toBe(1);
+    expect(percentageBase(pendingWith('divide'))).toBe(1);
+    expect(percentageBase(pendingWith('power'))).toBe(1);
+    expect(percentageBase(reduce(typeDigits('50')))).toBe(1);
+  });
+});
+
+describe('recall', () => {
+  it('shows the recalled number as a result', () => {
+    const state = reduce([...typeDigits('9'), { type: 'recall', value: 162.46 }]);
+    expect(state).toMatchObject({ entry: '162.46', overwrite: true, expression: '' });
+    expect(reduce(typeDigits('1'), state).entry).toBe('1');
+  });
+
+  it('becomes the second operand when an operator is pending', () => {
+    const state = reduce([...typeDigits('100'), { type: 'operator', operator: 'add' }, { type: 'recall', value: 36 }]);
+    expect(state).toMatchObject({ entry: '36', accumulator: 100, pendingOperator: 'add', expression: '100 +' });
+  });
+
+  it('replaces an error', () => {
+    const failed = reduce([
+      { type: 'calculationFailed', calculation: { operation: 'divide', a: 1, b: 0 }, message: 'Cannot divide by zero' },
+    ]);
+    expect(reduce([{ type: 'recall', value: 7 }], failed)).toMatchObject({ entry: '7', error: null });
   });
 });

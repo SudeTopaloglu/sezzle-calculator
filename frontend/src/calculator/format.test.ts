@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatEntry, formatNumber } from './format';
+import { formatCurrency, formatEntry, formatNumber, formatPlain } from './format';
 
 describe('formatNumber', () => {
   it.each([
@@ -31,5 +31,28 @@ describe('formatEntry', () => {
     ['-0', '−0'],
   ])('formats %s as %s', (entry, expected) => {
     expect(formatEntry(entry)).toBe(expected);
+  });
+});
+
+describe('formatPlain', () => {
+  it.each([
+    [1234.5, '1234.5'],
+    [-42, '-42'],
+    [0.1 + 0.2, '0.3'],
+    [1.5e21, '1.5e+21'],
+  ])('formats %s as %s', (value, expected) => {
+    expect(formatPlain(value)).toBe(expected);
+  });
+});
+
+describe('formatCurrency', () => {
+  it.each([
+    [0, '$0.00'],
+    [5, '$0.05'],
+    [2501, '$25.01'],
+    [123456789, '$1,234,567.89'],
+    [Number.MAX_SAFE_INTEGER, '$90,071,992,547,409.91'],
+  ])('formats %s cents as %s', (cents, expected) => {
+    expect(formatCurrency(cents)).toBe(expected);
   });
 });

@@ -7,8 +7,9 @@ const ACTIVE_KEY_HIGHLIGHT_MS = 120;
 /**
  * Calls onKey for keyboard shortcuts and returns the id of the key to
  * highlight, so keyboard input gets the same visual feedback as a click.
+ * Pass enabled = false while something else, like a dialog, owns the keyboard.
  */
-export function useKeyboardShortcuts(onKey: (key: KeyDefinition) => void): string | null {
+export function useKeyboardShortcuts(onKey: (key: KeyDefinition) => void, enabled = true): string | null {
   const [activeKeyId, setActiveKeyId] = useState<string | null>(null);
   const onKeyRef = useRef(onKey);
 
@@ -17,6 +18,9 @@ export function useKeyboardShortcuts(onKey: (key: KeyDefinition) => void): strin
   });
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     let highlightTimer: number | undefined;
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -40,8 +44,9 @@ export function useKeyboardShortcuts(onKey: (key: KeyDefinition) => void): strin
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.clearTimeout(highlightTimer);
+      setActiveKeyId(null);
     };
-  }, []);
+  }, [enabled]);
 
   return activeKeyId;
 }
