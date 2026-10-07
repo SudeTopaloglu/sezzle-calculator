@@ -1,0 +1,6 @@
+node_modules/
+dist/
+coverage/
+coverage.out
+coverage.html
+.DS_Store

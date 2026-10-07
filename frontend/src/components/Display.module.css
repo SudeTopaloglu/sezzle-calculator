@@ -1,0 +1,61 @@
+.display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 4px;
+  min-height: 112px;
+  padding: 16px 26px 14px;
+  border-radius: 32px;
+  background: var(--display-bg);
+  box-shadow:
+    0 10px 20px var(--shadow),
+    -6px -6px 14px var(--highlight);
+  overflow: hidden;
+}
+
+.expression {
+  max-width: 100%;
+  min-height: 1.4em;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-display);
+  font-weight: 300;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition:
+    opacity 150ms ease 150ms,
+    font-size 120ms ease;
+}
+
+.value[data-size='large'] {
+  font-size: 3.25rem;
+}
+
+.value[data-size='medium'] {
+  font-size: 2.4rem;
+}
+
+.value[data-size='small'] {
+  font-size: 1.6rem;
+}
+
+.value[data-error] {
+  color: var(--error);
+  font-weight: 400;
+}
+
+/* Fades only if a request takes longer than the transition delay. */
+.display[aria-busy='true'] .value {
+  opacity: 0.45;
+}

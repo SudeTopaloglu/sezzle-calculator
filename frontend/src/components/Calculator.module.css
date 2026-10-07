@@ -1,0 +1,26 @@
+.page {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px 16px;
+}
+
+.calculator {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  width: min(100%, 380px);
+  padding: clamp(20px, 6vw, 30px) clamp(18px, 6vw, 28px) clamp(24px, 7vw, 34px);
+  border-radius: 40px;
+  background: var(--surface);
+  box-shadow: 0 24px 48px var(--card-shadow);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

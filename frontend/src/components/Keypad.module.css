@@ -1,0 +1,73 @@
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(12px, 4vw, 18px) clamp(14px, 5vw, 22px);
+}
+
+.key {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 50%;
+  background: var(--key-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow:
+    0 6px 12px var(--shadow),
+    -4px -4px 10px var(--highlight);
+  transition:
+    box-shadow 120ms ease,
+    transform 120ms ease,
+    filter 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.key[data-variant='function'] {
+  color: var(--text-function);
+  font-size: 1.05rem;
+}
+
+.key[data-variant='operator'] {
+  color: var(--text-operator);
+  font-size: 1.5rem;
+}
+
+.key[data-variant='equals'] {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 1.6rem;
+}
+
+.key[data-span='wide'] {
+  grid-column: span 2;
+  aspect-ratio: auto;
+  border-radius: 999px;
+}
+
+.key[data-span='tall'] {
+  grid-row: span 2;
+  aspect-ratio: auto;
+  border-radius: 999px;
+}
+
+@media (hover: hover) {
+  .key:hover {
+    filter: brightness(1.03);
+    transform: translateY(-1px);
+  }
+}
+
+.key:active,
+.key[data-active] {
+  transform: translateY(1px);
+  box-shadow:
+    inset 3px 3px 8px var(--shadow),
+    inset -3px -3px 8px var(--highlight);
+}
+
+.key:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
