@@ -57,7 +57,7 @@ Along with this prompt I pasted the full assignment brief and attached a screens
 
 > what can we add as a creative and additional idea what do you think
 
-The agent suggested several extras, including Split in 4, and advised skipping operator precedence as a risky change this late in the project.
+In its answer, the agent advised skipping operator precedence as a risky change this late in the project.
 
 With the next prompt I attached a screenshot of a history-panel design as inspiration.
 
