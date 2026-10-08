@@ -54,6 +54,7 @@ func TestCalculateErrors(t *testing.T) {
 		{"unknown operation", "/api/v1/modulo", `{"a": 1, "b": 2}`, http.StatusNotFound, "UNKNOWN_OPERATION", "supported operations: add, divide"},
 		{"division by zero", "/api/v1/divide", `{"a": 1, "b": 0}`, http.StatusUnprocessableEntity, "DIVISION_BY_ZERO", "division by zero"},
 		{"negative square root", "/api/v1/sqrt", `{"a": -9}`, http.StatusUnprocessableEntity, "NEGATIVE_SQUARE_ROOT", "negative number"},
+		{"zero to a negative power", "/api/v1/power", `{"a": 0, "b": -2}`, http.StatusUnprocessableEntity, "DIVISION_BY_ZERO", "division by zero"},
 		{"non-real power", "/api/v1/power", `{"a": -8, "b": 0.5}`, http.StatusUnprocessableEntity, "UNDEFINED_RESULT", "not a real number"},
 		{"overflow", "/api/v1/power", `{"a": 10, "b": 400}`, http.StatusUnprocessableEntity, "RESULT_OUT_OF_RANGE", "too large"},
 		{"empty body", "/api/v1/add", ``, http.StatusBadRequest, "INVALID_REQUEST", "must not be empty"},

@@ -65,7 +65,9 @@ paths:
   /api/v1/power:
     post:
       summary: Raise a to the power b (a^b)
-      description: Fails with `UNDEFINED_RESULT` for non-real results such as (−8)^0.5.
+      description: >-
+        Fails with `UNDEFINED_RESULT` for non-real results such as (−8)^0.5,
+        and with `DIVISION_BY_ZERO` for 0 raised to a negative power.
       operationId: power
       tags: [Arithmetic]
       requestBody: { $ref: '#/components/requestBodies/BinaryOperands' }

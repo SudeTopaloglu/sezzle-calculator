@@ -32,7 +32,7 @@ var operations = map[string]Operation{
 	"subtract":   binary(func(a, b float64) (float64, error) { return a - b, nil }),
 	"multiply":   binary(func(a, b float64) (float64, error) { return a * b, nil }),
 	"divide":     binary(divide),
-	"power":      binary(func(a, b float64) (float64, error) { return math.Pow(a, b), nil }),
+	"power":      binary(power),
 	"sqrt":       unary(squareRoot),
 	"percentage": binary(percentOf),
 }
@@ -97,6 +97,15 @@ func divide(a, b float64) (float64, error) {
 		return 0, ErrDivisionByZero
 	}
 	return a / b, nil
+}
+
+// power returns a to the power b. Zero to a negative power is a division by
+// zero (0^-2 is 1/0^2), not an overflow, although math.Pow returns +Inf.
+func power(a, b float64) (float64, error) {
+	if a == 0 && b < 0 {
+		return 0, ErrDivisionByZero
+	}
+	return math.Pow(a, b), nil
 }
 
 // percentOf returns a percent of b. Multiplying first keeps whole-number
