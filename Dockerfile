@@ -8,7 +8,7 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-FROM golang:1.24-alpine AS backend
+FROM golang:1.27-alpine AS backend
 WORKDIR /src
 COPY backend/ ./
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/server ./cmd/server
