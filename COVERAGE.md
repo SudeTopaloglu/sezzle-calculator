@@ -1,12 +1,12 @@
 # Test Coverage Report
 
-Coverage of both layers, measured on **October 8, 2026** from the test suites in this repository. All 267 tests pass.
+Coverage of both layers, measured on **October 8, 2026** from the test suites in this repository. All 270 tests pass.
 
 ## Summary
 
 | Layer | Tests | Statements | Branches | Functions | Lines |
 | --- | --- | --- | --- | --- | --- |
-| **Backend** (Go) | 101 cases in 16 test functions | **91.9%** | n/a | n/a | n/a |
+| **Backend** (Go) | 104 cases in 17 test functions | **96.6%** | n/a | n/a | n/a |
 | **Frontend** (TypeScript) | 166 tests in 8 files | **99.25%** | **95.81%** | **98.29%** | **99.72%** |
 
 Go reports statement coverage only. Every line that is not covered is listed below with the reason.
@@ -29,17 +29,17 @@ npm run coverage
 
 | Package | Coverage | Test cases | What the tests check |
 | --- | --- | --- | --- |
-| `internal/calculator` | 100% | 34 | Every operation, plus the edge cases: division by zero, `0 ÷ 0`, negative square root, overflow (`10^400`), non-real powers (`(−8)^⅓`), `−0` normalized to `0`, and wrong operand count or NaN/Inf operands |
-| `internal/installments` | 100% | 16 | Cent-exact splits, leftover cents going to the earliest payments, and all validation errors. A sweep of 5,000 amounts × every allowed count checks that each plan adds up to the total |
-| `internal/api` | 99.0% | 49 | Every endpoint through the real router: status codes, exact JSON bodies, every validation error (malformed JSON, wrong types, unknown fields, oversized bodies), static file serving, and that `openapi.yaml` documents exactly the routes the server has |
-| `cmd/server` | 63.2% | 2 | The server starts, answers requests and shuts down cleanly when cancelled; an invalid port fails |
+| `internal/calculator` | 100% | 34 | Every operation, plus the edge cases: division by zero, `0 ÷ 0`, zero to a negative power (`0^−1`), negative square root, overflow (`10^400`), non-real powers (`(−8)^⅓`), `−0` normalized to `0`, and wrong operand count or NaN/Inf operands |
+| `internal/installments` | 100% | 14 | Cent-exact splits, leftover cents going to the earliest payments, and all validation errors. A sweep of 5,000 amounts × every allowed count checks that each plan adds up to the total |
+| `internal/api` | 99.2% | 53 | Every endpoint through the real router: status codes, exact JSON bodies, every validation error (malformed JSON, wrong types, unknown fields, oversized bodies), JSON 404/405 errors for unknown paths and wrong methods (with and without the frontend served), static file serving, and that `openapi.yaml` documents exactly the routes the server has |
+| `cmd/server` | 84.2% | 3 | The server starts, answers requests and shuts down cleanly when cancelled; the real `main` shuts down gracefully on SIGTERM, as sent by `docker stop`; an invalid port fails |
 
 <details>
 <summary><b>Coverage per function</b></summary>
 
 | File | Function | Coverage |
 | --- | --- | --- |
-| `backend/cmd/server/main.go` | `main` | 0.0% |
+| `backend/cmd/server/main.go` | `main` | 80.0% |
 | `backend/cmd/server/main.go` | `run` | 85.7% |
 | `backend/internal/api/calculate.go` | `handleCalculate` | 100.0% |
 | `backend/internal/api/calculate.go` | `operands` | 100.0% |
@@ -51,6 +51,8 @@ npm run coverage
 | `backend/internal/api/json.go` | `writeJSON` | 100.0% |
 | `backend/internal/api/router.go` | `NewRouter` | 100.0% |
 | `backend/internal/api/router.go` | `handleHealth` | 100.0% |
+| `backend/internal/api/router.go` | `handleMethodNotAllowed` | 100.0% |
+| `backend/internal/api/router.go` | `handleNotFound` | 100.0% |
 | `backend/internal/api/router.go` | `WriteHeader` | 100.0% |
 | `backend/internal/api/router.go` | `logRequests` | 100.0% |
 | `backend/internal/calculator/calculator.go` | `Lookup` | 100.0% |
@@ -59,10 +61,11 @@ npm run coverage
 | `backend/internal/calculator/calculator.go` | `binary` | 100.0% |
 | `backend/internal/calculator/calculator.go` | `unary` | 100.0% |
 | `backend/internal/calculator/calculator.go` | `divide` | 100.0% |
+| `backend/internal/calculator/calculator.go` | `power` | 100.0% |
 | `backend/internal/calculator/calculator.go` | `percentOf` | 100.0% |
 | `backend/internal/calculator/calculator.go` | `squareRoot` | 100.0% |
 | `backend/internal/installments/installments.go` | `Split` | 100.0% |
-| **Total** | | **91.9%** |
+| **Total** | | **96.6%** |
 
 </details>
 
@@ -70,7 +73,7 @@ npm run coverage
 
 | Code | Reason |
 | --- | --- |
-| `main()` in `cmd/server` | Only wires OS signals to `run()` and calls `os.Exit`. The logic lives in `run()`, which is tested |
+| `main()`: the `os.Exit(1)` path | Exiting would end the test process itself. The startup failure it reports comes from `run()`, which is tested with an invalid port |
 | `run()`: 2 error paths | Failures while the server is already shutting down, which can't be triggered reliably from a test |
 | `writeCalculationError`: `INTERNAL_ERROR` fallback | A safety net. Every calculation error has its own code, so no request can reach it |
 

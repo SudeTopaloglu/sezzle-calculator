@@ -15,6 +15,8 @@ A full-stack calculator. The **React + TypeScript** frontend handles input and d
 | **History** | Saved calculations; continued calculations share a card; tap a result to reuse it |
 | **Polish** | Keyboard support, copy result, light/dark theme, works on phones |
 
+**Why Pay in 4?** Sezzle's core product is splitting a purchase into interest-free installments, so I added a small extra feature in that spirit: it turns the number on the calculator into 4 payments.
+
 ## Getting started
 
 ### With Docker (recommended)
@@ -49,7 +51,7 @@ cd frontend && npm run coverage      # HTML report: frontend/coverage/index.html
 
 | Layer | Tests | Coverage |
 | --- | --- | --- |
-| Backend | 101 table-driven unit and HTTP test cases | **91.9%** of statements (`calculator` and `installments` 100%, `api` 99%) |
+| Backend | 104 table-driven unit and HTTP test cases | **96.6%** of statements (`calculator` and `installments` 100%, `api` 99%) |
 | Frontend | 166 unit and integration tests (the full UI against a fake backend) | **99.7%** of lines |
 
 The full report, per file and with a reason for every uncovered line, is in **[COVERAGE.md](COVERAGE.md)**. CI runs linting, type checks and both test suites on every push.
@@ -84,7 +86,8 @@ Errors always have the shape `{"error": {"code", "message"}}`:
 | Status | When |
 | --- | --- |
 | **400** `INVALID_REQUEST` | Malformed JSON, missing or non-numeric operand, unknown field |
-| **404** `UNKNOWN_OPERATION` | Operation doesn't exist |
+| **404** `UNKNOWN_OPERATION` · `NOT_FOUND` | Operation doesn't exist · any other unknown path under `/api/` |
+| **405** `METHOD_NOT_ALLOWED` | Any method but POST on an API endpoint |
 | **422** | Valid request with no answer: `DIVISION_BY_ZERO`, `NEGATIVE_SQUARE_ROOT`, `UNDEFINED_RESULT`, `RESULT_OUT_OF_RANGE`, `AMOUNT_TOO_SMALL`, `AMOUNT_TOO_LARGE` |
 
 ## Design decisions
@@ -101,6 +104,12 @@ Errors always have the shape `{"error": {"code", "message"}}`:
 - **Numbers** use float64, accurate to about 15 significant digits. The display rounds to 15, so `0.1 + 0.2` shows `0.3`.
 - **History** is stored in the browser (last 100 calculations).
 - **Parentheses** aren't supported. Precedence covers the expected cases without them.
+
+## Trade-offs and next steps
+
+- **One request per step.** `2 + 3 × 4` is two API calls in a row. That keeps every endpoint small, but a long expression costs one round trip per operator. The next step would be one endpoint that evaluates a whole expression, which would also allow parentheses.
+- **No authentication or rate limiting.** The API is stateless and public, which fits a demo. In production it would sit behind a gateway that adds both.
+- **No browser end-to-end tests.** The UI tests run the whole app in jsdom against a fake backend. A small Playwright suite against the Docker image would also cover layout and the real API.
 
 ## Project structure
 
