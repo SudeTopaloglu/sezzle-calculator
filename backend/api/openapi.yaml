@@ -7,6 +7,8 @@ info:
 
     Every error response has the same shape, `{"error": {"code": "...", "message": "..."}}`.
     Clients should branch on `code`; `message` is meant for people.
+    Endpoints under `/api/` accept only POST; any other method gets 405 `METHOD_NOT_ALLOWED`,
+    and an unlisted path under `/api/` gets 404 `NOT_FOUND`.
 
 servers:
   - url: http://localhost:8080
@@ -230,6 +232,8 @@ components:
               type: string
               enum:
                 - INVALID_REQUEST
+                - NOT_FOUND
+                - METHOD_NOT_ALLOWED
                 - UNKNOWN_OPERATION
                 - DIVISION_BY_ZERO
                 - NEGATIVE_SQUARE_ROOT
