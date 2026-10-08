@@ -1,33 +1,35 @@
-import { OPERATIONS, type Calculation } from './operations';
+import { formatNumber } from './format';
 
 export interface HistoryEntry {
   id: string;
-  calculation: Calculation;
+  /** What was calculated, as shown on screen, e.g. "2 + 3 × 4". */
+  expression: string;
   result: number;
   /** Milliseconds since the epoch. */
   timestamp: number;
 }
 
 /** Consecutive calculations where each continues from the previous result. */
-export interface HistoryGroup {
+interface HistoryGroup {
   id: string;
   entries: HistoryEntry[];
 }
 
-export interface HistoryDay {
+interface HistoryDay {
   id: string;
   label: string;
   groups: HistoryGroup[];
 }
 
-export function createHistoryEntry(calculation: Calculation, result: number, timestamp = Date.now()): HistoryEntry {
-  return { id: `${timestamp}-${Math.random().toString(36).slice(2, 8)}`, calculation, result, timestamp };
+export function createHistoryEntry(expression: string, result: number, timestamp = Date.now()): HistoryEntry {
+  return { id: `${timestamp}-${Math.random().toString(36).slice(2, 8)}`, expression, result, timestamp };
 }
 
 /**
  * Arranges entries (stored oldest first) for display: days and groups newest
  * first, entries inside a group in the order they happened, like a paper tape.
- * An entry joins the previous group when it starts from that group's last result.
+ * An entry joins the previous group when it starts with that group's last result,
+ * e.g. "8,045.7 − 28" after "206.3 × 39 = 8,045.7".
  */
 export function groupHistory(entries: readonly HistoryEntry[], now = new Date()): HistoryDay[] {
   const days: HistoryDay[] = [];
@@ -41,7 +43,8 @@ export function groupHistory(entries: readonly HistoryEntry[], now = new Date())
     }
 
     const group = day.groups.at(-1);
-    if (group && entry.calculation.a === group.entries.at(-1)?.result) {
+    const previous = group?.entries.at(-1);
+    if (group && previous && entry.expression.startsWith(`${formatNumber(previous.result)} `)) {
       group.entries.push(entry);
     } else {
       day.groups.push({ id: entry.id, entries: [entry] });
@@ -78,13 +81,10 @@ export function parseHistory(raw: string | null): HistoryEntry[] {
 
 function isHistoryEntry(value: unknown): value is HistoryEntry {
   const entry = value as Partial<HistoryEntry> | null;
-  const calculation = entry?.calculation as Partial<{ operation: string; a: number; b: number }> | undefined;
   return (
     typeof entry?.id === 'string' &&
+    typeof entry.expression === 'string' &&
     typeof entry.timestamp === 'number' &&
-    Number.isFinite(entry.result) &&
-    OPERATIONS.includes(calculation?.operation as Calculation['operation']) &&
-    Number.isFinite(calculation?.a) &&
-    (calculation?.operation === 'sqrt' || Number.isFinite(calculation?.b))
+    Number.isFinite(entry.result)
   );
 }

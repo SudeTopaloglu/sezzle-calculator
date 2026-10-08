@@ -1,27 +1,28 @@
 import type { ReactNode } from 'react';
 import { formatCurrency } from '../calculator/format';
-import type { SplitState } from '../hooks/useSplit';
+import type { InstallmentsState } from '../hooks/useInstallments';
 import { InfoIcon } from './icons';
 import { Panel } from './Panel';
-import styles from './SplitPanel.module.css';
+import styles from './InstallmentsPanel.module.css';
 
-interface SplitPanelProps {
+interface InstallmentsPanelProps {
   open: boolean;
-  state: SplitState;
+  state: InstallmentsState;
   onClose: () => void;
 }
 
-export function SplitPanel({ open, state, onClose }: SplitPanelProps) {
+/** Shows how the number on screen splits into 4 payments, today and every 2 weeks after. */
+export function InstallmentsPanel({ open, state, onClose }: InstallmentsPanelProps) {
   return (
-    <Panel title="Split in 4" subtitle="Equal payments every 2 weeks" placement="bottom" open={open} onClose={onClose}>
+    <Panel title="Pay in 4" subtitle="4 interest-free payments over 6 weeks" placement="bottom" open={open} onClose={onClose}>
       <div aria-live="polite" aria-busy={state.status === 'loading'}>
-        <SplitContent state={state} />
+        <PlanContent state={state} />
       </div>
     </Panel>
   );
 }
 
-function SplitContent({ state }: { state: SplitState }) {
+function PlanContent({ state }: { state: InstallmentsState }) {
   switch (state.status) {
     case 'idle':
       return null;
@@ -61,6 +62,7 @@ function SplitContent({ state }: { state: SplitState }) {
               </li>
             ))}
           </ol>
+          <p className={styles.disclaimer}>Estimate only. Fees and plans may vary.</p>
         </>
       );
     }

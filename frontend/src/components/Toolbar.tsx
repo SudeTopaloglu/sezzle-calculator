@@ -1,17 +1,17 @@
 import { useCopy } from '../hooks/useCopy';
-import { CheckIcon, CopyIcon, HistoryIcon, SplitIcon } from './icons';
+import { CheckIcon, CopyIcon, HistoryIcon, QuartersIcon } from './icons';
 import styles from './Toolbar.module.css';
 
 interface ToolbarProps {
   onOpenHistory: () => void;
-  onOpenSplit: () => void;
-  /** Text the copy button puts on the clipboard; null disables copying and splitting. */
+  onOpenInstallments: () => void;
+  /** Text the copy button puts on the clipboard; null disables copying and Pay in 4. */
   copyText: string | null;
 }
 
 const COPY_FEEDBACK = { idle: '', copied: 'Copied', failed: 'Copy failed' } as const;
 
-export function Toolbar({ onOpenHistory, onOpenSplit, copyText }: ToolbarProps) {
+export function Toolbar({ onOpenHistory, onOpenInstallments, copyText }: ToolbarProps) {
   const { status, copy } = useCopy();
 
   return (
@@ -36,9 +36,9 @@ export function Toolbar({ onOpenHistory, onOpenSplit, copyText }: ToolbarProps) 
             {COPY_FEEDBACK[status]}
           </span>
         </span>
-        <button type="button" className={styles.splitButton} disabled={copyText === null} onClick={onOpenSplit}>
-          <SplitIcon width={18} height={18} />
-          Split in 4
+        <button type="button" className={styles.payButton} disabled={copyText === null} onClick={onOpenInstallments}>
+          <QuartersIcon width={18} height={18} />
+          Pay in 4
         </button>
       </div>
     </div>

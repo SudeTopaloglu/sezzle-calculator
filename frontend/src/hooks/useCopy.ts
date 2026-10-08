@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-export type CopyStatus = 'idle' | 'copied' | 'failed';
+type CopyStatus = 'idle' | 'copied' | 'failed';
 
 const FEEDBACK_MS = 1_500;
 

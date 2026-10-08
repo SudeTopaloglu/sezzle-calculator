@@ -1,6 +1,6 @@
 import type { Calculation } from '../calculator/operations';
 
-export const API_BASE_URL = '/api/v1';
+const API_BASE_URL = '/api/v1';
 const REQUEST_TIMEOUT_MS = 5_000;
 
 /** An error reported by the API, or raised when it cannot be reached. */

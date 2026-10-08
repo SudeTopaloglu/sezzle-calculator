@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createHistoryEntry, parseHistory, type HistoryEntry } from '../calculator/history';
-import type { Calculation } from '../calculator/operations';
 
-export const HISTORY_STORAGE_KEY = 'calculator-history-v1';
+const STORAGE_KEY = 'calculator-history-v2';
 const MAX_ENTRIES = 100;
 
 /** Calculation history, kept in localStorage so it survives a reload. */
@@ -13,8 +12,8 @@ export function useHistory() {
     writeStorage(JSON.stringify(entries));
   }, [entries]);
 
-  const add = useCallback((calculation: Calculation, result: number) => {
-    const entry = createHistoryEntry(calculation, result);
+  const add = useCallback((expression: string, result: number) => {
+    const entry = createHistoryEntry(expression, result);
     setEntries((current) => [...current, entry].slice(-MAX_ENTRIES));
   }, []);
 
@@ -27,7 +26,7 @@ export function useHistory() {
 // then simply lasts for the session instead of breaking the calculator.
 function readStorage(): string | null {
   try {
-    return window.localStorage.getItem(HISTORY_STORAGE_KEY);
+    return window.localStorage.getItem(STORAGE_KEY);
   } catch {
     return null;
   }
@@ -35,7 +34,7 @@ function readStorage(): string | null {
 
 function writeStorage(value: string) {
   try {
-    window.localStorage.setItem(HISTORY_STORAGE_KEY, value);
+    window.localStorage.setItem(STORAGE_KEY, value);
   } catch {
     // See above: keep working without persistence.
   }

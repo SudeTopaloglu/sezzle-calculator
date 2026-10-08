@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { formatNumber } from '../calculator/format';
 import { groupHistory, type HistoryEntry } from '../calculator/history';
-import { describeCalculation } from '../calculator/operations';
 import styles from './HistoryPanel.module.css';
 import { HistoryIcon } from './icons';
 import { Panel } from './Panel';
@@ -50,7 +49,7 @@ export function HistoryPanel({ open, entries, onSelect, onClear, onClose }: Hist
                       {group.entries.map((entry) => (
                         <li key={entry.id}>
                           <button type="button" className={styles.step} onClick={() => onSelect(entry)}>
-                            <span className={styles.expression}>{describeCalculation(entry.calculation)}</span>{' '}
+                            <span className={styles.expression}>{entry.expression}</span>{' '}
                             <span className={styles.result}>= {formatNumber(entry.result)}</span>
                           </button>
                         </li>

@@ -7,16 +7,16 @@ import {
 } from '../api/calculatorApi';
 import { formatPlain } from '../calculator/format';
 
-export type SplitState =
+export type InstallmentsState =
   | { status: 'idle' }
   | { status: 'invalid'; message: string }
   | { status: 'loading' }
   | { status: 'success'; plan: InstallmentPlan; rounded: boolean }
   | { status: 'error'; message: string; retry: (() => void) | null };
 
-/** Loads an installment plan for the number on screen. */
-export function useSplit(split: (amountCents: number) => Promise<InstallmentPlan> = splitIntoInstallments) {
-  const [state, setState] = useState<SplitState>({ status: 'idle' });
+/** Loads a Pay in 4 plan for the number on screen. */
+export function useInstallments(fetchPlan: (amountCents: number) => Promise<InstallmentPlan> = splitIntoInstallments) {
+  const [state, setState] = useState<InstallmentsState>({ status: 'idle' });
   // Only the latest request may update the state, so a slow answer never
   // overwrites the plan for a newer amount.
   const latestRequest = useRef(0);
@@ -25,7 +25,7 @@ export function useSplit(split: (amountCents: number) => Promise<InstallmentPlan
     const request = ++latestRequest.current;
     setState({ status: 'loading' });
     try {
-      const plan = await split(amountCents);
+      const plan = await fetchPlan(amountCents);
       if (request === latestRequest.current) {
         setState({ status: 'success', plan, rounded });
       }

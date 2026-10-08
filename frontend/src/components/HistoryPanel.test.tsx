@@ -21,17 +21,19 @@ describe('History', () => {
     expect(screen.getByRole('button', { name: 'Close History' })).toHaveFocus();
   });
 
-  it('groups chained calculations on one tape', async () => {
+  it('records whole expressions and puts continued calculations on one tape', async () => {
     const { click } = renderCalculator();
 
     await click('2', 'Add', '3', 'Multiply', '4', 'Equals');
-    await waitFor(() => expect(displayValue()).toHaveTextContent(/^20$/));
+    await waitFor(() => expect(displayValue()).toHaveTextContent(/^14$/));
+    await click('Subtract', '4', 'Equals');
+    await waitFor(() => expect(displayValue()).toHaveTextContent(/^10$/));
     await click('9', 'Square root');
     await waitFor(() => expect(displayValue()).toHaveTextContent(/^3$/));
     await click('History');
 
-    const first = within(historyPanel()).getByRole('button', { name: '2 + 3 = 5' });
-    const second = within(historyPanel()).getByRole('button', { name: '5 × 4 = 20' });
+    const first = within(historyPanel()).getByRole('button', { name: '2 + 3 × 4 = 14' });
+    const second = within(historyPanel()).getByRole('button', { name: '14 − 4 = 10' });
     const separate = within(historyPanel()).getByRole('button', { name: '√(9) = 3' });
     const tapeOf = (element: HTMLElement) => element.closest('ol')?.closest('li');
     expect(tapeOf(first)).toBe(tapeOf(second));

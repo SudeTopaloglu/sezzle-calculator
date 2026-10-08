@@ -4,20 +4,20 @@ import type { HistoryEntry } from '../calculator/history';
 import { useCalculator } from '../hooks/useCalculator';
 import { useHistory } from '../hooks/useHistory';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
-import { useSplit } from '../hooks/useSplit';
+import { useInstallments } from '../hooks/useInstallments';
 import styles from './Calculator.module.css';
 import { Display } from './Display';
 import { HistoryPanel } from './HistoryPanel';
+import { InstallmentsPanel } from './InstallmentsPanel';
 import { Keypad } from './Keypad';
-import { SplitPanel } from './SplitPanel';
 import { Toolbar } from './Toolbar';
 
-type OpenPanel = 'history' | 'split' | null;
+type OpenPanel = 'history' | 'installments' | null;
 
 export function Calculator() {
   const history = useHistory();
-  const calculator = useCalculator({ onCalculated: history.add });
-  const split = useSplit();
+  const calculator = useCalculator({ onCompleted: history.add });
+  const installments = useInstallments();
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null);
   const activeKeyId = useKeyboardShortcuts((key) => calculator.press(key.input), openPanel === null);
 
@@ -25,10 +25,10 @@ export function Calculator() {
   const { value, recall } = calculator;
   const usable = value !== null && !calculator.isCalculating;
 
-  function openSplit() {
+  function openInstallments() {
     if (usable) {
-      split.start(value);
-      setOpenPanel('split');
+      installments.start(value);
+      setOpenPanel('installments');
     }
   }
 
@@ -47,7 +47,7 @@ export function Calculator() {
         <div className={styles.content} inert={openPanel !== null}>
           <Toolbar
             onOpenHistory={() => setOpenPanel('history')}
-            onOpenSplit={openSplit}
+            onOpenInstallments={openInstallments}
             copyText={usable ? formatPlain(value) : null}
           />
           <Display
@@ -66,7 +66,7 @@ export function Calculator() {
           onClear={history.clear}
           onClose={closePanel}
         />
-        <SplitPanel open={openPanel === 'split'} state={split.state} onClose={closePanel} />
+        <InstallmentsPanel open={openPanel === 'installments'} state={installments.state} onClose={closePanel} />
       </section>
     </main>
   );
