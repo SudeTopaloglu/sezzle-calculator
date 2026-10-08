@@ -49,10 +49,10 @@ cd frontend && npm run coverage      # HTML report: frontend/coverage/index.html
 
 | Layer | Tests | Coverage |
 | --- | --- | --- |
-| Backend | Table-driven unit tests and HTTP tests through the router | **91.9%** of statements (`calculator` and `installments` 100%, `api` 99%) |
-| Frontend | 165 unit and integration tests (the full UI against a fake backend) | **99.5%** of lines |
+| Backend | 101 table-driven unit and HTTP test cases | **91.9%** of statements (`calculator` and `installments` 100%, `api` 99%) |
+| Frontend | 166 unit and integration tests (the full UI against a fake backend) | **99.7%** of lines |
 
-CI runs linting, type checks and both test suites on every push.
+The full report, per file and with a reason for every uncovered line, is in **[COVERAGE.md](COVERAGE.md)**. CI runs linting, type checks and both test suites on every push.
 
 ## API
 

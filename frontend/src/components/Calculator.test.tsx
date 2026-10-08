@@ -256,6 +256,15 @@ describe('Calculator', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: '7' })).not.toHaveAttribute('data-active'));
   });
 
+  it('ignores keys that are not shortcuts', async () => {
+    const { user } = setup();
+
+    await user.keyboard('7a?{Tab}');
+
+    expect(displayValue()).toHaveTextContent(/^7$/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('leaves browser shortcuts alone', async () => {
     const { user } = setup();
 

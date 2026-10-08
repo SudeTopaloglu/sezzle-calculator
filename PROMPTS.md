@@ -52,6 +52,18 @@ The agent checked how Pay in 4 works in published reviews (25% today, then every
 
 This added operator precedence (`2 + 3 × 4 = 14`), updated the tests, shortened the README and removed unneeded files.
 
+> nasıl repo göndercem
+
+Along with the next prompt I pasted the assignment brief again.
+
+> check everything
+
+The agent checked every requirement against the published repository. It cloned the repo fresh, ran the README commands, and tested with the minimum Go and Node versions. The one gap it found was a detailed coverage report.
+
+> e kapsam raporu da hazırla tatım güzel yeterli bir biçimde
+
+This added [COVERAGE.md](COVERAGE.md), with per-file numbers and the reason for every uncovered line.
+
 ## How I checked the work
 
 Every change was verified with the test suites, linters and static analysis, and by driving the real app in a browser against the running backend. That covered light and dark themes, phone sizes, keyboard input and error states. The Docker image was rebuilt and tested after each round.
